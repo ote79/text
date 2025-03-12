@@ -1,1 +1,196 @@
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
 
+public class Main {
+
+    public static void copy(int count, String input, String output) {
+        for (int i = 1; i < count + 1; i++) {
+            StringBuilder stringBuilder = new StringBuilder(output);
+            if (i != 1)
+                stringBuilder.insert(stringBuilder.lastIndexOf("."), "(" + i + ")");
+            new Thread(() -> {
+                try (FileInputStream inputStream = new FileInputStream(input);
+                     FileOutputStream outputStream = new FileOutputStream(stringBuilder.toString())) {
+                    int len;
+                    byte[] bytes = new byte[1024];
+                    while ((len = inputStream.read(bytes)) != -1) {
+                        outputStream.write(bytes, 0, len);
+                    }
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    public static void main(String[] ages) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame();
+            frame.setBounds(600, 400, 1500, 800);
+
+            JPanel panel = new JPanel();
+            GridLayout layout = new GridLayout();
+            layout.setRows(3);
+            panel.setLayout(layout);
+
+            Label label1 = new Label("");
+            Label label2 = new Label(" ");
+
+
+            Font buttonFont = new Font("Microsoft YaHei", Font.BOLD, 40);
+            JButton button1 = new JButton("复制文件");
+            JButton button2 = new JButton("源文件");
+            JButton button3 = new JButton("目标文件");
+            JButton button4 = new JButton("开始复制");
+            JButton button5 = new JButton("确定");
+            JButton button6 = new JButton("再来一个");
+            JButton button7 = new JButton("退出程序");
+            Button button8 = new Button("选择源文件");
+            button1.setFont(buttonFont);
+            button2.setFont(buttonFont);
+            button3.setFont(buttonFont);
+            button4.setFont(buttonFont);
+            button5.setFont(buttonFont);
+            button6.setFont(buttonFont);
+            button7.setFont(buttonFont);
+
+            JDialog dialog = new JDialog(frame, "选择", true);
+            File[] input = new File[1];
+            File[] output = new File[1];
+            FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 200, 100);
+            dialog.setLayout(flowLayout);
+
+            JTextField inputText = new JTextField("                                                                 ");
+            JTextField outputText = new JTextField("                                                                    ");
+            JTextField copyCount = new JTextField("1", 5);
+            copyCount.setHorizontalAlignment(SwingConstants.CENTER);
+            Label label = new Label("当前复制次数为：");
+
+            inputText.setFont(new Font("Microsoft YaHei", Font.BOLD, 20));
+            outputText.setFont(new Font("Microsoft YaHei", Font.BOLD, 20));
+            copyCount.setFont(buttonFont);
+            label.setFont(buttonFont);
+
+            dialog.setLayout(layout);
+
+            Panel under = new Panel(flowLayout);
+            Panel down = new Panel(flowLayout);
+
+            dialog.add(under);
+            dialog.add(down);
+
+            under.add(inputText);
+            under.add(outputText);
+
+            down.add(button2);
+            down.add(button4);
+            down.add(button3);
+
+            button2.addActionListener(e1 -> {
+                FileDialog inputDialog = new FileDialog(frame, "请选择要拷贝的文件", FileDialog.LOAD);
+                inputDialog.setVisible(true);
+                if (inputDialog.getDirectory() != null && inputDialog.getFile() != null) {
+                    input[0] = new File(inputDialog.getDirectory() + inputDialog.getFile());
+                    SwingUtilities.invokeLater(() -> {
+                        inputText.setText(inputDialog.getDirectory() + inputDialog.getFile());
+                        dialog.setVisible(true);
+                        inputText.requestFocusInWindow();
+                    });
+                }
+            });
+
+            JDialog dialog2 = new JDialog(dialog, "错误！！！", true);
+
+            button8.addActionListener(e -> {
+                dialog2.dispose();
+                button2.doClick();
+            });
+
+            button3.addActionListener(e1 -> {
+
+                if (input[0] == null) {
+
+                    dialog2.setBounds(800, 600, 800, 400);
+                    JLabel jLabel = new JLabel("请先选择选文件！！！");
+                    jLabel.setFont(buttonFont);
+                    dialog2.add(jLabel);
+                    button8.setFont(buttonFont);
+                    dialog2.add(button8);
+                    dialog2.setLayout(flowLayout);
+                    dialog2.setVisible(true);
+                } else {
+                    JFileChooser folderChooser = new JFileChooser();
+                    folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    int result = folderChooser.showOpenDialog(frame);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        if (input[0] != null) {
+                            output[0] = new File(folderChooser.getSelectedFile() + File.separator + input[0].getName());
+                            SwingUtilities.invokeLater(() -> {
+                                outputText.setText(folderChooser.getSelectedFile() + File.separator + input[0].getName());
+                                outputText.setVisible(true);
+                                outputText.requestFocusInWindow();
+                            });
+                        }
+                    }
+                }
+
+            });
+
+            button4.addActionListener(e1 -> {
+                dialog.setVisible(false);
+
+                if (input[0] != null && output[0] != null) {
+
+                    copy(Integer.parseInt(copyCount.getText()), inputText.getText(), outputText.getText());
+
+                    SwingUtilities.invokeLater(() -> {
+                        JDialog dialog1 = new JDialog(dialog, "复制成功！！！", true);
+                        dialog1.setBounds(800, 600, 800, 400);
+                        dialog1.setLayout(flowLayout);
+                        dialog1.add(button5);
+                        dialog1.add(button6);
+                        dialog1.setLocationRelativeTo(null);
+                        button5.addActionListener(e2 -> dialog1.dispose());
+                        button6.addActionListener(e3 -> {
+                            dialog.dispose();
+                            button1.doClick();
+                        });
+                        dialog1.setVisible(true);
+                    });
+                }
+            });
+            button1.addActionListener(e -> {
+
+                Rectangle frameBounds = frame.getBounds();
+                int newWidth = (int) (frameBounds.width * 0.9);
+                int newHeight = (int) (frameBounds.height * 0.9);
+                int newX = frameBounds.x + (frameBounds.width - newWidth) / 2;
+                int newY = frameBounds.y + (frameBounds.height - newHeight) / 2;
+
+                dialog.setBounds(newX, newY, newWidth, newHeight);
+                dialog.setVisible(true);
+            });
+            button7.addActionListener(e -> System.exit(114514));
+
+
+            addCenteredComponent(panel, label1);
+            addCenteredComponent(panel, label2);
+            addCenteredComponent(panel, button1);
+            addCenteredComponent(panel, button7);
+            addCenteredComponent(panel, label);
+            addCenteredComponent(panel, copyCount);
+
+
+            frame.add(panel);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
+    }
+
+    private static void addCenteredComponent(JPanel parent, Component component) {
+        JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        wrapper.add(component);
+        parent.add(wrapper);
+    }
+}
